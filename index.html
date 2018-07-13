@@ -63,8 +63,20 @@ div.tooltip {
 </style>
 
 <body>
-<h3>3D model環狀分類視覺化</h3>
-<svg width="1060" height="1060"></svg>
+<h1>資訊視覺化期末Project—3D model環狀分類視覺化</h3>
+<div style="float:left; margin-left:0px;">
+    <svg width="1060" height="1060"></svg>
+</div>
+<div style="float:left;width:400px;">
+    <h2>用途：</h2>
+    <h3>讓使用者能夠清楚分析不同類別之間的關係</h3>
+    <h2>操作步驟：</h2>
+    <h3>1.一開始會將分類好的資料，以樹狀圖的方式呈現。</h3>
+    <h3>2.透過點擊樹葉節點，決定以此節點為中心的距離關係表，將較疏遠的節點(經過root)分隔在紅色圓圈外，強調分類關係。</h3>
+    <h3>3.可以透過點選其他類別物件使得環狀分布圖重新以點選物件為中心排列。</h3>
+    <h3>4.可透過把滑鼠移動到點上去查看對應的3D Model。</h3>
+</div>
+
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="tree.js"></script>
 <script>
