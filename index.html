@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node circle {
+    fill: #999;
+}
+
+.node text {
+    font: 10px sans-serif;
+}
+
+.node--internal circle {
+    fill: #555;
+}
+
+.node--internal text {
+    text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+}
+
+.link {
+    fill: none;
+    stroke: #555;
+    stroke-opacity: 0.4;
+    stroke-width: 1.5px;
+}
+
+.innerNode{
+    fill: #999;
+}
+.pieNode text{
+    font: 10px sans-serif;
+    text-anchor: middle;
+}
+
+.rootSep{
+    fill: none;
+    stroke: #D00;
+    stroke-opacity: 0.4;
+    stroke-width: 3.5px;
+}
+.distSep{
+    fill: none;
+    stroke: #555;
+    stroke-opacity: 0.4;
+    stroke-width: 1.5px; 
+}
+
+div.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 100px;					
+    height: 100px;					
+    padding: 2px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
+
+
+</style>
+<svg width="1060" height="1060"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="tree.js"></script>
+<script>
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    g = svg.append("g").attr("transform", "translate(" + (width / 2 ) + "," + (height / 2 ) + ")");
+
+var stratify = d3.stratify()
+    .parentId(function(d) { return d.id.substring(0, d.id.lastIndexOf(".")); });
+
+var tree = d3.tree()
+    .size([2 * Math.PI, 500])
+    .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+var items=[];
+var TFArr=[];
+var DisArr=[];
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+d3.csv("tree_data.csv", function(error, data) {
+    if (error) throw error;
+    for(var i=0; i<data.length; i++){
+        if(data[i].value!=""){
+            items[items.length]=data[i];
+        }
+    }
+    TFArr = is_through_root(items);
+    DisArr = distanceGenerator(items);
+
+    var root = tree(stratify(data));
+
+    var link = g.selectAll(".link")
+        .data(root.links())
+        .enter().append("path")
+        .attr("class", "link")
+        .attr("d", d3.linkRadial()
+            .angle(function(d) { return d.x; })
+            .radius(function(d) { return d.y; }));
+
+    var node = g.selectAll(".node")
+        .data(root.descendants())
+        .enter().append("g")
+        .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
+        .attr("transform", function(d) { return "translate(" + radialPoint(d.x, d.y) + ")"; });
+
+    node.append("circle")
+        .attr("id",function(d) {return d.id;})
+        .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
+        .attr("r", 2.5)
+        .on("click",mouseClick)
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut);
+
+    node.append("text")
+        .attr("dy", "0.31em")
+        .attr("x", function(d) { return d.x < Math.PI === !d.children ? 6 : -6; })
+        .attr("text-anchor", function(d) { return d.x < Math.PI === !d.children ? "start" : "end"; })
+        .attr("transform", function(d) { return "rotate(" + (d.x < Math.PI ? d.x - Math.PI / 2 : d.x + Math.PI / 2) * 180 / Math.PI + ")"; })
+        .text(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1); });
+
+});
+
+function radialPoint(x, y) {
+    return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];
+}
+function handleMouseOver(d, i) {  // Add interactivity
+    d3.select(this).attr('r',5);
+}
+
+function handleMouseOut(d, i) {
+    d3.select(this).attr('r',2.5);
+}
+
+function handleMouseOverPic(d, i) {  // Add interactivity
+    d3.select(this).attr('r',5);
+    div.transition().duration(500)      
+                    .style("opacity", 1); 
+                let name = d3.select(this).attr("id").substring(d3.select(this).attr("id").lastIndexOf(".") + 1)
+                var example = "<img src=dataset_image/"+name+".png width=100 height=100 />";
+                div.html(example) //this will add the image on mouseover
+                    .style("left", (d3.event.pageX -50) + "px")     
+                    .style("top", (d3.event.pageY -120) + "px")
+                    .style("font-color", "white");
+
+}
+
+function handleMouseOutPic(d, i) {
+    d3.select(this).attr('r',2.5);
+    div.transition()		
+        .duration(500)		
+        .style("opacity", 0);
+}
+
+function mouseClick(){
+
+    if(d3.select(this).attr('class') != "node node--leaf")
+        return;
+    toPieChart(items,d3.select(this).attr('id'),TFArr,DisArr)
+}
+
+</script>
